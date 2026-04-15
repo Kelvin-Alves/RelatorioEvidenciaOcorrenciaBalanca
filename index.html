@@ -633,11 +633,26 @@ function exportarPDF() {
     const conteudo = document.getElementById("conteudoPDF");
 
     html2pdf().set({
-        margin: 10,
-        filename: incidente ? `${incidente}_Evidencias.pdf`
-        : `Relatorio_Evidencias.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, scrollY: 0 }
+        
+	  margin: [10, 10, 10, 10],
+		filename: incidente
+			? `${incidente}_Evidencias.pdf`
+			: `Relatorio_Evidencias.pdf`,
+		image: { type: 'jpeg', quality: 0.98 },
+		html2canvas: {
+			scale: 2,
+			useCORS: true,
+			scrollY: -window.scrollY
+		},
+		jsPDF: {
+			unit: "mm",
+			format: "a4",
+			orientation: "portrait"
+		},
+		pagebreak: {
+			mode: ["css", "legacy", "avoid-all"]
+		}
+
     })
     .from(conteudo)
     .save()
