@@ -62,13 +62,11 @@ textarea {
     height: 70px;
 }
 
-
 img {
     max-width: 100%;
-    page-break-inside: avoid;
-    break-inside: avoid;
+    border: 1px solid #000;
+    margin-top: 10px;
 }
-
 
 /* FORÇAR QUEBRA DE PÁGINA A4 */
 .page-break {
@@ -143,35 +141,6 @@ text-align: center;
 body {
     padding-top: 70px; /* altura da barra */
 }
-
-
-
-@media print {
-    body {
-        padding-top: 0 !important;
-    }
-
-    #conteudoPDF {
-        overflow: visible !important;
-    }
-
-    .evidencia {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-
-    img {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-
-    textarea {
-        display: none !important;
-    }
-}
-
-
-
 
 
 
@@ -673,10 +642,7 @@ function exportarPDF() {
 		html2canvas: {
 			scale: 2,
 			useCORS: true,
-			scrollY: 0,
-			windowWidth: document.body.scrollWidth,
-			windowHeight: document.body.scrollHeight
-
+			scrollY: -window.scrollY
 		},
 		jsPDF: {
 			unit: "mm",
