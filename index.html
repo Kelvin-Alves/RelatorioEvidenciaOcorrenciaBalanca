@@ -62,11 +62,13 @@ textarea {
     height: 70px;
 }
 
+
 img {
     max-width: 100%;
-    border: 1px solid #000;
-    margin-top: 10px;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
+
 
 /* FORÇAR QUEBRA DE PÁGINA A4 */
 .page-break {
@@ -144,12 +146,41 @@ body {
 
 
 
+@media print {
+    body {
+        padding-top: 0 !important;
+    }
+
+    #conteudoPDF {
+        overflow: visible !important;
+    }
+
+    .evidencia {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    img {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    textarea {
+        display: none !important;
+    }
+}
+
+
+
+
+
+
 </style>
 </head>
 
 <body>
 
-<div class="container" id="conteudoPDF">
+<div class="container-fluid" id="conteudoPDF">
 
 <h1>Relatório de Evidências </h1>
 
@@ -642,7 +673,10 @@ function exportarPDF() {
 		html2canvas: {
 			scale: 2,
 			useCORS: true,
-			scrollY: -window.scrollY
+			scrollY: 0,
+			windowWidth: document.body.scrollWidth,
+			windowHeight: document.body.scrollHeight
+
 		},
 		jsPDF: {
 			unit: "mm",
