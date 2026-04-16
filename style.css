@@ -1,4 +1,6 @@
 <style>
+
+
 body {
     font-family: Arial, sans-serif;
     background: #f2f2f2;
@@ -133,10 +135,48 @@ text-align: center;
   overflow: visible !important;
 }
 
+.pdf-container {
+  
+  width: 210mm;      /* largura A4 */
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 10mm;
+  box-sizing: border-box;
+
+}
+
 
 body {
     padding-top: 70px; /* altura da barra */
 }
+/* ===== AJUSTES PARA PDF ===== */
+
+
+@media print {
+  .no-pdf,
+  .navbar {
+    display: none !important;
+  }
+
+  body {
+    margin: 0;
+  }
+}
+
+/* impede quebra no meio da evidência */
+.evidencia {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* evita corte de imagens */
+.evidencia img {
+  max-width: 100%;
+  page-break-inside: avoid;
+}
+
+
+
 
 
 

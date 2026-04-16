@@ -13,15 +13,6 @@
 </head>
 
 <body>
-
-<div class="container" id="conteudoPDF">
-
-<h1>Relatório de Evidências </h1>
-
-<div id="dataHoraPdf"
-     style="display:none; font-size: 12px; text-align:right; margin-bottom:10px;">
-</div>
-
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top no-pdf">
   <div class="container-fluid">
 
@@ -74,6 +65,15 @@
 
   </div>
 </nav>
+
+<div id="conteudoPDF" class="pdf-container">
+
+<h1>Relatório de Evidências </h1>
+
+<div id="dataHoraPdf"
+     style="display:none; font-size: 12px; text-align:right; margin-bottom:10px;">
+</div>
+
 
 
 <div class="row g-3 mb-3">
@@ -148,7 +148,9 @@
     </table>
 </div>
 
-<div class="card mb-4"><divdiv class="card-body">
+
+<div class="card mb-4">
+    <div class="card-body">
 
         <h5 class="card-title mb-3">Observação do que foi realizado</h5>
 
@@ -156,7 +158,7 @@
             id="obsInput"
             class="form-control"
             rows="4"
-            placeholder="Descreva "></textarea>
+            placeholder="Descreva o que foi realizado"></textarea>
 
         <!-- Este será usado SOMENTE no PDF -->
         <div id="obsPdf"
@@ -165,6 +167,8 @@
         </div>
 
     </div>
+</div>
+
 	<h2>Evidências</h2>
 	
 <div class="fab-container no-pdf">
@@ -179,20 +183,27 @@
         <span class="fab-label">Adicionar Evidência</span>
     </div>
 
-    <div class="fab-item" onclick="exportarPDF()">
-        <button
-            class="btn btn-success rounded-circle shadow fab-btn"
-            title="Finalizar Documento">
-            <i class="bi bi-file-earmark-pdf"></i>
-        </button>
-        <span class="fab-label">Finalizar</span>
-    </div>
+    <div class="fab-item" id="btnFinalizar" onclick="exportarPDF()">
+
+		<button 
+		  id="btnFinalizar"
+		  class="btn btn-success rounded-circle shadow fab-btn"
+		  title="Finalizar Documento"
+		  disabled>
+		  <i class="bi bi-file-earmark-pdf"></i>
+		  
+		</button>
+		<span class="fab-label">Finalizar</span>
+	</div>
 
 </div>
 
 <div id="lista"></div>
 </div>
 
+<div id="pdfTemp"
+     style="position:absolute; left:-9999px; top:0; width:210mm;">
+</div>
 
 <script src="./script.js"></script>
 

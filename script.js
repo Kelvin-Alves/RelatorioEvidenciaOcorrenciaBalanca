@@ -92,42 +92,72 @@ async function restaurarAutoSave() {
             }, 0);
         });
 
-
+		atualizarEstadoBotaoFinalizar();
         renumerarEvidencias();
         console.log("✅ Auto-save restaurado");
     };
 }
 
+
 document.addEventListener("DOMContentLoaded", async () => {
-    await abrirBanco();
-    restaurarAutoSave();
+  await abrirBanco();
+  restaurarAutoSave();
+
+  // Campos obrigatórios
+  ["filialInput", "incidenteInput", "fieldInput", "obsInput"]
+    .forEach(id => {
+      document.getElementById(id)
+        .addEventListener("input", atualizarEstadoBotaoFinalizar);
+    });
+
+  atualizarEstadoBotaoFinalizar();
 });
 
 
 function validarCamposObrigatorios() {
-    const filial = document.getElementById("filialInput").value.trim();
-    const incidente = document.getElementById("incidenteInput").value.trim();
-    const field = document.getElementById("fieldInput").value.trim();
+  if (!document.getElementById("filialInput").value.trim()) {
+    alert("⚠️ Informe o Nome da Filial.");
+    return false;
+  }
 
-    if (!filial) {
-        alert("⚠️ Informe o Nome da Filial.");
-        document.getElementById("filialInput").focus();
-        return false;
+  if (!document.getElementById("incidenteInput").value.trim()) {
+    alert("⚠️ Informe o Número do Incidente.");
+    return false;
+  }
+
+  if (!document.getElementById("fieldInput").value.trim()) {
+    alert("⚠️ Informe o Nome do Field.");
+    return false;
+  }
+
+  if (!document.getElementById("obsInput").value.trim()) {
+    alert("⚠️ Preencha a Observação do que foi realizado.");
+    return false;
+  }
+
+  const evidencias = document.querySelectorAll(".evidencia");
+
+  if (evidencias.length === 0) {
+    alert("⚠️ Adicione pelo menos uma evidência.");
+    return false;
+  }
+
+  for (let ev of evidencias) {
+    const texto = ev.querySelector(".descricao-input")?.value.trim();
+    const img = ev.querySelector("img")?.src;
+
+    if (!texto) {
+      alert("⚠️ Todas as evidências devem ter descrição.");
+      return false;
     }
 
-    if (!incidente) {
-        alert("⚠️ Informe o Número do Incidente.");
-        document.getElementById("incidenteInput").focus();
-        return false;
+    if (!img) {
+      alert("⚠️ Todas as evidências devem ter imagem.");
+      return false;
     }
+  }
 
-    if (!field) {
-        alert("⚠️ Informe o Nome do Field.");
-        document.getElementById("fieldInput").focus();
-        return false;
-    }
-
-    return true; // tudo ok
+  return true;
 }
 
 function removerEvidencia(botao) {
@@ -142,6 +172,7 @@ function removerEvidencia(botao) {
 	
 	//atulizar banco
 	salvarAutoSave();
+	atualizarEstadoBotaoFinalizar();
 }
 
 function renumerarEvidencias() {
@@ -157,11 +188,13 @@ function renumerarEvidencias() {
 function adicionarEvidencia() {
     contador++;
 
-    const div = document.createElement("div");
-    div.className = "evidencia";
+	
 
+    const div = document.createElement("div");
+	
+    div.className = "evidencia";
     div.innerHTML = `
-	<div class="card-body ">
+	<div class="card-body">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="card-title mb-0">Evidência ${contador}</h6>
@@ -209,7 +242,7 @@ function adicionarEvidencia() {
     document.getElementById("lista").prepend(div);
 	
 	 renumerarEvidencias()
-
+	atualizarEstadoBotaoFinalizar();
 }
 
 async function tirarPrint(id) {
@@ -227,140 +260,174 @@ async function tirarPrint(id) {
     document.getElementById(id).src = canvas.toDataURL();
 	// ✅ SALVA DEPOIS DO PRINT
 	 salvarAutoSave();
+	 atualizarEstadoBotaoFinalizar();
 }
+
 
 function carregarImagem(input, id) {
-    const reader = new FileReader();
-    
-	reader.onload = () => {
-        const img = document.getElementById(id);
-        img.src = reader.result;
+  if (!input.files || !input.files[0]) return; // ✅ cancelado ou vazio
 
-        // ✅ SALVA APENAS DEPOIS DA IMAGEM ESTAR PRONTA
-        salvarAutoSave();
-    };
+  const img = document.getElementById(id);
+  if (!img) return; // ✅ segurança extra
 
-    reader.readAsDataURL(input.files[0]);
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    img.src = reader.result;
+
+    // ✅ salva e revalida somente após imagem pronta
+    salvarAutoSave();
+    atualizarEstadoBotaoFinalizar();
+  };
+
+  reader.readAsDataURL(input.files[0]);
 }
-
 
 
 function exportarPDF() {
-	exportandoPDF = true;
-	renumerarEvidencias(); // garante ordem final correta
-	 
-	if (!validarCamposObrigatorios()) {
-		return;
-	}
-	
-	const now = new Date();
+  if (!validarCamposObrigatorios()) return;
 
-	const dataHoraFormatada = now.toLocaleString("pt-BR", {
-		dateStyle: "short",
-		timeStyle: "short"
-	});
+  const filial = document.getElementById("filialInput").value;
+  const incidente = document.getElementById("incidenteInput").value;
+  const field = document.getElementById("fieldInput").value;
+  const observacao = document.getElementById("obsInput").value;
+  const dataHora = new Date().toLocaleString("pt-BR");
 
-	const dataHoraPdf = document.getElementById("dataHoraPdf");
-	dataHoraPdf.innerText = "Gerado em: " + dataHoraFormatada;
-	dataHoraPdf.style.display = "block";
+  const pdfTemp = document.getElementById("pdfTemp");
 
-	const incidente = document.getElementById("incidenteInput").value
-		.trim()
-		.replace(/[^a-zA-Z0-9_-]/g, ""); // limpa caracteres inválidos
-	
-    /* ========= OBSERVAÇÃO GERAL ========= */
-    const obsInput = document.getElementById("obsInput");
-    const obsPdf = document.getElementById("obsPdf");
-    obsPdf.innerText = obsInput.value;
+  pdfTemp.innerHTML = `
+    <style>
+      @page { size: A4; margin: 15mm; }
 
-    obsInput.style.display = "none";
-    obsPdf.style.display = "block";
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        color: #000;
+      }
 
-    /* ========= EVIDÊNCIAS ========= */
-    document.querySelectorAll(".evidencia").forEach(bloco => {
-        const textarea = bloco.querySelector(".descricao-input");
-        const divPdf = bloco.querySelector(".descricao-pdf");
+      h1 {
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 15px;
+      }
 
-        if (textarea && divPdf) {
-            divPdf.innerText = textarea.value;
-            textarea.style.display = "none";
-            divPdf.style.display = "block";
-        }
-    });
+      h2 {
+        font-size: 16px;
+        margin: 20px 0 10px;
+      }
 
-    /* ========= ESCONDER AÇÕES ========= */
-    const esconder = document.querySelectorAll(".no-pdf, input[type='file']");
-    esconder.forEach(el => el.style.display = "none");
+      .dados {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
 
-    /* ========= GERAR PDF ========= */
-    const conteudo = document.getElementById("conteudoPDF");
+      .campo {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px;
+      }
 
-    
-	html2pdf()
-	  .set({
-		margin: 10,
-		filename: incidente
-		  ? `${incidente}_Evidencias.pdf`
-		  : `Relatorio_Evidencias.pdf`,
+      .campo label {
+        font-size: 11px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 4px;
+      }
 
-		image: { type: 'jpeg', quality: 0.98 },
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
 
-		html2canvas: {
-		  scale: 2,
-		  useCORS: true,
-		  logging: false,
+      th, td {
+        border: 1px solid #000;
+        padding: 6px;
+      }
 
-		  // 🔑 PEGA A PÁGINA INTEIRA
-		  scrollY: 0,
-		  scrollX: 0,
-		  windowWidth: document.documentElement.scrollWidth,
-		  windowHeight: document.documentElement.scrollHeight
-		},
+      th { background: #f2f2f2; }
 
-		jsPDF: {
-		  unit: "mm",
-		  format: "a4",
-		  orientation: "portrait"
-		},
+      .observacao-box {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px;
+        min-height: 60px;
+        white-space: pre-wrap;
+      }
 
-		pagebreak: {
-		  mode: ['css', 'legacy']
-		}
-	  })
-	  .from(conteudo)
-	  .save()
+      .evidencia {
+        page-break-before: always;
+        border: 1px solid #000;
+        padding: 10px;
+      }
 
-    .then(() => {
+      .evidencia img {
+        width: 100%;
+        height: auto;
+        margin-top: 10px;
+        border: 1px solid #000;
+      }
 
-        /* ========= RESTAURAR OBSERVAÇÃO ========= */
-        obsPdf.style.display = "none";
-        obsInput.style.display = "";
+      .rodape {
+        position: fixed;
+        bottom: 10mm;
+        right: 15mm;
+        font-size: 10px;
+      }
+    </style>
 
-        /* ========= RESTAURAR EVIDÊNCIAS ========= */
-        document.querySelectorAll(".evidencia").forEach(bloco => {
-            const textarea = bloco.querySelector(".descricao-input");
-            const divPdf = bloco.querySelector(".descricao-pdf");
+    <h1>Relatório de Evidências</h1>
 
-            if (textarea && divPdf) {
-                textarea.style.display = "";
-                divPdf.style.display = "none";
-            }
-        });
+    <div class="dados">
+      <div class="campo"><label>Nome da Filial</label>${filial}</div>
+      <div class="campo"><label>Número do Incidente</label>${incidente}</div>
+      <div class="campo"><label>Nome do Field</label>${field}</div>
+    </div>
 
-        /* ========= RESTAURAR BOTÕES ========= */
-        esconder.forEach(el => el.style.display = "");
-		
-		const tx = db.transaction("rascunho", "readwrite");
-		tx.objectStore("rascunho").delete("relatorioAtual");
-		exportandoPDF = false;
-		dataHoraPdf.style.display = "none";
-		console.log("🧹 Auto-save limpo");
+    <h2>Orientações de Evidências Necessárias</h2>
+    <table>
+      <tr><th>Item</th><th>Descrição</th><th>Evidência</th></tr>
+      <tr><td>1</td><td>Observação do que foi realizado</td><td>Descrição detalhada do serviço executado</td></tr>
+      <tr><td>2</td><td>Foto do Módulo – Antes</td><td>Imagem da condição inicial do módulo</td></tr>
+      <tr><td>3</td><td>Foto do Módulo – Durante</td><td>Imagem do momento da execução</td></tr>
+      <tr><td>4</td><td>Foto do Módulo – Depois</td><td>Imagem do estado final do módulo</td></tr>
+    </table>
 
-		// MENSAGEM FINAL
-	    alert("✅ Relatório salvo com sucesso! Verifique sua pasta de Downloads");
+    <h2>Observação do que foi realizado</h2>
+    <div class="observacao-box">${observacao}</div>
 
-    });
+    <h2>Evidências</h2>
+    ${[...document.querySelectorAll(".evidencia")].map((ev, i) => {
+      const texto = ev.querySelector(".descricao-input")?.value || "";
+      const img = ev.querySelector("img")?.src || "";
+      return `
+        <div class="evidencia">
+          <h3>Evidência ${i + 1}</h3>
+          <p>${texto}</p>
+          ${img ? `<img src="${img}">` : ""}
+        </div>
+      `;
+    }).join("")}
+
+    <div class="rodape">${incidente} — ${dataHora}</div>
+  `;
+
+  html2pdf()
+    .set({
+      margin: 0,
+      filename: `${incidente}_Evidencias.pdf`,
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["css", "avoid-all"] }
+    })
+    .from(pdfTemp)
+    .save()
+    .then(() => pdfTemp.innerHTML = "");
 }
+``
+
+ 
 
 const templates = {
   1: {
@@ -463,6 +530,45 @@ function limparCampos() {
 
   salvarAutoSave();
 }
+
+//monitora em tempo real os Campos obriatorios
+
+function atualizarEstadoBotaoFinalizar() {
+  const btn = document.getElementById("btnFinalizar");
+  if (!btn) return;
+
+  const filial = document.getElementById("filialInput").value.trim();
+  const incidente = document.getElementById("incidenteInput").value.trim();
+  const field = document.getElementById("fieldInput").value.trim();
+  const observacao = document.getElementById("obsInput").value.trim();
+
+  // ✅ Evidências
+  const evidencias = document.querySelectorAll(".evidencia");
+  let evidenciasValidas = evidencias.length > 0;
+
+  evidencias.forEach(ev => {
+    const texto = ev.querySelector(".descricao-input")?.value.trim();
+    const img = ev.querySelector("img")?.src;
+
+    if (!texto || !img) {
+      evidenciasValidas = false;
+    }
+  });
+
+  const tudoPreenchido =
+    filial &&
+    incidente &&
+    field &&
+    observacao &&
+    evidenciasValidas;
+
+  btn.disabled = !tudoPreenchido;
+  btn.style.opacity = tudoPreenchido ? "1" : "0.5";
+  btn.style.cursor = tudoPreenchido ? "pointer" : "not-allowed";
+}
+
+
+
 
 
 
