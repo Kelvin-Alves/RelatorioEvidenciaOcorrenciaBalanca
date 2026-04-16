@@ -295,29 +295,41 @@ function exportarPDF() {
     /* ========= GERAR PDF ========= */
     const conteudo = document.getElementById("conteudoPDF");
 
-    html2pdf().set({
-        
-	  margin: [10, 10, 10, 10],
+    
+	html2pdf()
+	  .set({
+		margin: 10,
 		filename: incidente
-			? `${incidente}_Evidencias.pdf`
-			: `Relatorio_Evidencias.pdf`,
-		image: { type: 'jpeg', quality: 0.98 },
-		html2canvas: {
-			scale: 2,
-			useCORS: true
-		},
-		jsPDF: {
-			unit: "mm",
-			format: "a4",
-			orientation: "portrait"
-		},
-		pagebreak: {
-			mode: ["css", "legacy", "avoid-all"]
-		}
+		  ? `${incidente}_Evidencias.pdf`
+		  : `Relatorio_Evidencias.pdf`,
 
-    })
-    .from(conteudo)
-    .save()
+		image: { type: 'jpeg', quality: 0.98 },
+
+		html2canvas: {
+		  scale: 2,
+		  useCORS: true,
+		  logging: false,
+
+		  // 🔑 PEGA A PÁGINA INTEIRA
+		  scrollY: 0,
+		  scrollX: 0,
+		  windowWidth: document.documentElement.scrollWidth,
+		  windowHeight: document.documentElement.scrollHeight
+		},
+
+		jsPDF: {
+		  unit: "mm",
+		  format: "a4",
+		  orientation: "portrait"
+		},
+
+		pagebreak: {
+		  mode: ['css', 'legacy']
+		}
+	  })
+	  .from(conteudo)
+	  .save()
+
     .then(() => {
 
         /* ========= RESTAURAR OBSERVAÇÃO ========= */
