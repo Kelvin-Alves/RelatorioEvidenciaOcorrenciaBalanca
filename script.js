@@ -97,7 +97,7 @@ async function restaurarAutoSave() {
         console.log("✅ Auto-save restaurado");
     };
 }
-``
+
 document.addEventListener("DOMContentLoaded", async () => {
     await abrirBanco();
     restaurarAutoSave();
@@ -304,8 +304,7 @@ function exportarPDF() {
 		image: { type: 'jpeg', quality: 0.98 },
 		html2canvas: {
 			scale: 2,
-			useCORS: true,
-			scrollY: -window.scrollY
+			useCORS: true
 		},
 		jsPDF: {
 			unit: "mm",
