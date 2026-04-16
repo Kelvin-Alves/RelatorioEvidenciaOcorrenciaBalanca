@@ -44,6 +44,7 @@ th, td {
     padding: 10px;
     margin-top: 20px;
     page-break-inside: avoid;
+	break-inside: avoid;
 }
 
 textarea {
@@ -54,7 +55,7 @@ textarea {
 img {
     max-width: 100%;
     border: 1px solid #000;
-    margin-top: 10px;
+    margin-top: 30px;
 }
 
 /* FORÇAR QUEBRA DE PÁGINA A4 */
