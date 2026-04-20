@@ -283,149 +283,261 @@ function carregarImagem(input, id) {
   reader.readAsDataURL(input.files[0]);
 }
 
+/* ===== FUNÇÃO AUXILIAR: AJUSTAR IMAGEM ===== */
+function ajustarImagem(doc, img, maxW, maxH) {
+  const props = doc.getImageProperties(img);
+
+  const ratio = Math.min(
+    maxW / props.width,
+    maxH / props.height
+  );
+
+  return {
+    w: props.width * ratio,
+    h: props.height * ratio,
+    type: props.fileType
+  };
+}
+
+function ajustarImagemQuadrado(doc, img, boxW, boxH) {
+  const props = doc.getImageProperties(img);
+
+  // usa MAX (fill), não min (contain)
+  const ratio = Math.max(
+    boxW / props.width,
+    boxH / props.height
+  );
+
+  const w = props.width * ratio;
+  const h = props.height * ratio;
+
+  return {
+    w,
+    h,
+    type: props.fileType
+  };
+}
+
 
 function exportarPDF() {
-  if (!validarCamposObrigatorios()) return;
+	  if (!validarCamposObrigatorios()) return;
+	  
+	  
+	  const dataHora = new Date().toLocaleString("pt-BR", {
+		  dateStyle: "short",
+		  timeStyle: "short"
+	  });
 
-  const filial = document.getElementById("filialInput").value;
-  const incidente = document.getElementById("incidenteInput").value;
-  const field = document.getElementById("fieldInput").value;
-  const observacao = document.getElementById("obsInput").value;
-  const dataHora = new Date().toLocaleString("pt-BR");
 
-  const pdfTemp = document.getElementById("pdfTemp");
+	  const { jsPDF } = window.jspdf;
+	  const doc = new jsPDF("p", "mm", "a4");
 
-  pdfTemp.innerHTML = `
-    <style>
-      @page { size: A4; margin: 15mm; }
+	  const filial = document.getElementById("filialInput").value;
+	  const incidente = document.getElementById("incidenteInput").value;
+	  const field = document.getElementById("fieldInput").value;
+	  const observacao = document.getElementById("obsInput").value;
 
-      body {
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 12px;
-        color: #000;
-      }
+	  let y = 30;
 
-      h1 {
-        text-align: center;
-        font-size: 20px;
-        margin-bottom: 15px;
-      }
+	  /* ===== TÍTULO ===== */
+	  doc.setFontSize(18);
+	  doc.text("Relatório de Evidências", 105, y, { align: "center" });
+	  y += 12;
 
-      h2 {
-        font-size: 16px;
-        margin: 20px 0 10px;
-      }
+	  /* ===== CAMPOS (3 colunas) ===== */
+	  doc.setFontSize(10);
 
-      .dados {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 20px;
-      }
+	  
+	  const startX = 15;
+	  const startY = y;
+	  const boxH = 16;
+	  const gap = 5;
+	  const boxW = (180 - gap * 2) / 3; // divide igualment
 
-      .campo {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 6px;
-      }
 
-      .campo label {
-        font-size: 11px;
-        font-weight: bold;
-        display: block;
-        margin-bottom: 4px;
-      }
+	function campo(x, y, label, value) {
+		  // Label
+		  doc.setFontSize(9);
+		  doc.text(label, x, y - 3);
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
+		  // Caixa
+		  doc.rect(x, y, boxW, boxH);
 
-      th, td {
-        border: 1px solid #000;
-        padding: 6px;
-      }
+		  // Texto com quebra automática
+		  doc.setFontSize(10);
 
-      th { background: #f2f2f2; }
+		  const padding = 2;
+		  const larguraTexto = boxW - padding * 2;
 
-      .observacao-box {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 10px;
-        min-height: 60px;
-        white-space: pre-wrap;
-      }
+		  const linhas = doc.splitTextToSize(value || "-", larguraTexto);
 
-      .evidencia {
-        page-break-before: always;
-        border: 1px solid #000;
-        padding: 10px;
-      }
+		  // altura inicial do texto
+		  let yTexto = y + 6;
 
-      .evidencia img {
-        width: 100%;
-        height: auto;
-        margin-top: 10px;
-        border: 1px solid #000;
-      }
+		  // desenha no máximo 2 linhas (para não estourar)
+		  linhas.slice(0, 2).forEach(linha => {
+			doc.text(linha, x + padding, yTexto);
+			yTexto += 5;
+		  });
+	}
 
-      .rodape {
-        position: fixed;
-        bottom: 10mm;
-        right: 15mm;
-        font-size: 10px;
-      }
-    </style>
+	campo(startX, y, "Nome da Filial", filial);
+	campo(startX + boxW + 5, y, "Número do Incidente", incidente);
+	campo(startX + (boxW * 2) + 10, y, "Nome do Field", field);
 
-    <h1>Relatório de Evidências</h1>
+	y += 25;
 
-    <div class="dados">
-      <div class="campo"><label>Nome da Filial</label>${filial}</div>
-      <div class="campo"><label>Número do Incidente</label>${incidente}</div>
-      <div class="campo"><label>Nome do Field</label>${field}</div>
-    </div>
+	/* ===== TÍTULO TABELA ===== */
+	doc.setFontSize(14);
+	doc.text("Orientações de Evidências Necessárias", 15, y);
+	y += 6;
 
-    <h2>Orientações de Evidências Necessárias</h2>
-    <table>
-      <tr><th>Item</th><th>Descrição</th><th>Evidência</th></tr>
-      <tr><td>1</td><td>Observação do que foi realizado</td><td>Descrição detalhada do serviço executado</td></tr>
-      <tr><td>2</td><td>Foto do Módulo – Antes</td><td>Imagem da condição inicial do módulo</td></tr>
-      <tr><td>3</td><td>Foto do Módulo – Durante</td><td>Imagem do momento da execução</td></tr>
-      <tr><td>4</td><td>Foto do Módulo – Depois</td><td>Imagem do estado final do módulo</td></tr>
-    </table>
+	/* ===== TABELA ===== */
+	doc.setFontSize(10);
 
-    <h2>Observação do que foi realizado</h2>
-    <div class="observacao-box">${observacao}</div>
+	const colX = [15, 30, 95];
+	const colW = [15, 65, 100];
+	const rowH = 8;
 
-    <h2>Evidências</h2>
-    ${[...document.querySelectorAll(".evidencia")].map((ev, i) => {
-      const texto = ev.querySelector(".descricao-input")?.value || "";
-      const img = ev.querySelector("img")?.src || "";
-      return `
-        <div class="evidencia">
-          <h3>Evidência ${i + 1}</h3>
-          <p>${texto}</p>
-          ${img ? `<img src="${img}">` : ""}
-        </div>
-      `;
-    }).join("")}
+	const headers = ["Item", "Descrição", "Evidência"];
+	headers.forEach((h, i) => {
+	doc.rect(colX[i], y, colW[i], rowH);
+	doc.text(h, colX[i] + 2, y + 5);
+	});
 
-    <div class="rodape">${incidente} — ${dataHora}</div>
-  `;
+	y += rowH;
 
-  html2pdf()
-    .set({
-      margin: 0,
-      filename: `${incidente}_Evidencias.pdf`,
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "avoid-all"] }
-    })
-    .from(pdfTemp)
-    .save()
-    .then(() => pdfTemp.innerHTML = "");
+	const rows = [
+	["1", "Observação do que foi realizado", "Descrição detalhada do serviço executado"],
+	["2", "Foto do Módulo – Antes", "Imagem da condição inicial do módulo"],
+	["3", "Foto do Módulo – Durante", "Imagem do momento da execução"],
+	["4", "Foto do Módulo – Depois", "Imagem do estado final do módulo"]
+	];
+
+	rows.forEach(r => {
+		r.forEach((txt, i) => {
+		  doc.rect(colX[i], y, colW[i], rowH);
+		  doc.text(txt, colX[i] + 2, y + 5);
+		});
+		y += rowH;
+	});
+
+	y += 8;
+
+	/* ===== OBSERVAÇÃO ===== */
+	doc.setFontSize(14);
+	doc.text("Observação do que foi realizado", 15, y);
+	y += 5;
+
+
+	doc.rect(15, y, 180, 25);
+	doc.setFontSize(10);
+	const obsSplit = doc.splitTextToSize(observacao, 176);
+	doc.text(obsSplit, 17, y + 6);
+
+	// ✅ avança o y após a observação
+	y += 50;
+
+	// ✅ agora sim escreve o texto mais para baixo
+	doc.setFontSize(14);
+	
+	doc.text(
+	  "Evidências nas próximas páginas",
+	  105,   // centro da página A4
+	  y,
+	  { align: "center" }
+	);
+
+
+	// ✅ pequeno espaço antes de trocar de página
+	y += 5;
+
+    
+	doc.addPage();
+	const evidencias = [...document.querySelectorAll(".evidencia")];
+
+	const margemTop = 15;
+	const margemLeft = 15;
+	const areaAltura = 130; // espaço vertical por evidência
+	const imgMaxW = 180;
+	const imgMaxH = 85
+
+  /* ===== EVIDÊNCIAS ===== */
+
+	evidencias.forEach((ev, index) => {
+
+	  // Nova página a cada 2 evidências
+	  
+	  if (index % 2 === 0 && index !== 0) {
+		doc.addPage();
+	  }
+
+
+	  // posição vertical (topo ou metade da página)
+	  let yBase = margemTop + (index % 2) * areaAltura;
+
+	  const texto = ev.querySelector(".descricao-input")?.value || "";
+	  const img = ev.querySelector("img")?.src;
+
+	  /* TÍTULO */
+	  doc.setFontSize(13);
+	  doc.text(`Evidência ${index + 1}`, margemLeft, yBase);
+	  yBase += 6;
+	  
+	/* TEXTO */
+	doc.setFontSize(10);
+	const textoAltura = 18;
+	const txt = doc.splitTextToSize(texto || "-", 180);
+
+	doc.text(txt.slice(0, 4), margemLeft, yBase);
+	doc.rect(margemLeft, yBase - 5, 180, textoAltura);
+	yBase += textoAltura;
+
+  /* IMAGEM */
+
+	if (img) {
+	  const boxW = 180;
+	  const boxH = 85;
+
+	  const dims = ajustarImagemQuadrado(doc, img, boxW, boxH);
+
+	  // centraliza dentro do quadrado
+	  const xImg = margemLeft + (boxW - dims.w) / 2;
+	  const yImg = yBase + (boxH - dims.h) / 2;
+
+	  // moldura preta (quadrado)
+	  doc.setDrawColor(0);
+	  doc.rect(margemLeft, yBase, boxW, boxH);
+
+	  // imagem preenchendo o quadrado
+	  doc.addImage(
+		img,
+		dims.type,
+		xImg,
+		yImg,
+		dims.w,
+		dims.h
+	  );
+	}
+});
+  
+	const totalPaginas = doc.getNumberOfPages();
+
+	for (let i = 1; i <= totalPaginas; i++) {
+	  doc.setPage(i);
+	  doc.setFontSize(9);
+	  doc.text(
+		`${incidente} | ${dataHora} | Página ${i} de ${totalPaginas}`,
+		105,
+		290,
+		{ align: "center" }
+	  );
+	}
+
+  doc.save(`${incidente}_Evidencias.pdf`);
+atualizarEstadoBotaoFinalizar()  
+  
 }
-``
 
  
 
